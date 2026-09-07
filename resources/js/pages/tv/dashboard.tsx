@@ -1,19 +1,17 @@
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from '@/components/ui/carousel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
 import { Deferred, Head, router } from '@inertiajs/react';
 import { CalendarIcon, Sparkles, TrendingUp } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import GroupDrilldownDialog from './components/group-drilldown-dialog';
 import PlatformDrilldownDialog from './components/platform-drilldown-dialog';
-import { PlatformStatCardCarousel, PlatformStatCardGrid, type ComparisonMode } from './components/platform-stat-cards';
+import { PlatformStatCardCarousel, PlatformStatCardGrid } from './components/platform-stat-cards';
 import StatsSkeletonGrid from './components/stats-skeleton-grid';
 import type { DashboardViewMode, DrilldownData, DrilldownMetric, PlatformStat, TvDashboardProps } from './types';
 import { formatCurrency, getTimeBasedMessage } from './utils';
 
 export default function TvDashboard({ platformStats, generatedAt }: TvDashboardProps) {
     const [viewMode, setViewMode] = useState<DashboardViewMode>('grid');
-    const [comparisonMode, setComparisonMode] = useState<ComparisonMode>('average');
     const [carouselApi, setCarouselApi] = useState<CarouselApi>();
     const [currentTime, setCurrentTime] = useState(() => new Date());
     const [drilldownOpen, setDrilldownOpen] = useState(false);
@@ -208,33 +206,6 @@ export default function TvDashboard({ platformStats, generatedAt }: TvDashboardP
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2">
-                                <div className="flex items-center rounded-full border border-white/45 bg-white/20 p-1 text-white shadow-xs">
-                                    <button
-                                        type="button"
-                                        onClick={() => setComparisonMode('average')}
-                                        className={cn(
-                                            'h-7 rounded-full px-3 text-xs font-medium transition-all hover:cursor-pointer',
-                                            comparisonMode === 'average'
-                                                ? 'bg-white/30 font-semibold text-white shadow-xs'
-                                                : 'text-white/80 hover:text-white',
-                                        )}
-                                    >
-                                        Rata-rata
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setComparisonMode('last_month')}
-                                        className={cn(
-                                            'h-7 rounded-full px-3 text-xs font-medium transition-all hover:cursor-pointer',
-                                            comparisonMode === 'last_month'
-                                                ? 'bg-white/30 font-semibold text-white shadow-xs'
-                                                : 'text-white/80 hover:text-white',
-                                        )}
-                                    >
-                                        Bulan Lalu
-                                    </button>
-                                </div>
-
                                 <TabsList className="h-auto rounded-full border border-white/45 bg-white/20 p-1 text-white">
                                     <TabsTrigger
                                         value="grid"
@@ -269,7 +240,6 @@ export default function TvDashboard({ platformStats, generatedAt }: TvDashboardP
                                                 item={item}
                                                 className="min-h-30 md:h-full"
                                                 onOpenDetail={handleOpenDrilldown}
-                                                comparisonMode={comparisonMode}
                                             />
                                         ))}
                                     </div>
@@ -355,7 +325,6 @@ export default function TvDashboard({ platformStats, generatedAt }: TvDashboardP
                                                                 item={item}
                                                                 className="h-full"
                                                                 onOpenDetail={handleOpenDrilldown}
-                                                                comparisonMode={comparisonMode}
                                                             />
                                                         </CarouselItem>
                                                     ))}

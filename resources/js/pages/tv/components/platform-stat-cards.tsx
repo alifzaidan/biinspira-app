@@ -4,13 +4,10 @@ import type { DrilldownMetric, PlatformStat } from '../types';
 import { formatCurrency } from '../utils';
 import ChangeBadge from './change-badge';
 
-export type ComparisonMode = 'average' | 'last_month';
-
 type CardProps = {
     item: PlatformStat;
     className?: string;
     onOpenDetail: (platformKey: string, metric: DrilldownMetric) => void;
-    comparisonMode?: ComparisonMode;
 };
 
 function PlatformLogo({ item }: { item: PlatformStat }) {
@@ -25,15 +22,32 @@ function PlatformLogo({ item }: { item: PlatformStat }) {
     );
 }
 
-function StatChangeBadge({
-    percentage,
-    direction,
-    subtitle,
-}: {
-    percentage: number;
-    direction: 'up' | 'down' | 'flat';
-    subtitle?: string;
-}) {
+// Badge vs Rata-rata (sebelah kiri) - warna Indigo (naik) / Amber-Oranye (turun)
+function AvgChangeBadge({ percentage, direction }: { percentage: number; direction: 'up' | 'down' | 'flat' }) {
+    const isUp = direction === 'up';
+    const isDown = direction === 'down';
+    const styles = isUp
+        ? 'border-indigo-400/80 bg-indigo-100 text-indigo-800'
+        : isDown
+          ? 'border-amber-400/80 bg-amber-100 text-amber-800'
+          : 'border-slate-300/80 bg-slate-100 text-slate-700';
+    const Icon = isUp ? ArrowUpRight : isDown ? ArrowDownRight : ArrowRight;
+    const sign = isUp ? '+' : isDown ? '-' : '';
+    const label = direction === 'flat' ? '0%' : `${sign}${percentage.toFixed(2)}%`;
+
+    return (
+        <span
+            title="vs Rata-rata"
+            className={`inline-flex shrink-0 items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-bold sm:text-xs ${styles}`}
+        >
+            <Icon className="h-3 w-3 shrink-0 stroke-[2.5]" />
+            <span>{label}</span>
+        </span>
+    );
+}
+
+// Badge vs Bulan Lalu (sebelah kanan) - warna Emerald (naik) / Rose (turun)
+function MonthChangeBadge({ percentage, direction }: { percentage: number; direction: 'up' | 'down' | 'flat' }) {
     const isUp = direction === 'up';
     const isDown = direction === 'down';
     const styles = isUp
@@ -46,15 +60,17 @@ function StatChangeBadge({
     const label = direction === 'flat' ? '0%' : `${sign}${percentage.toFixed(2)}%`;
 
     return (
-        <span className={`inline-flex shrink-0 items-center gap-0.5 rounded-full border px-2 py-0.5 text-[10px] font-bold sm:text-xs ${styles}`}>
+        <span
+            title="vs Bulan Lalu"
+            className={`inline-flex shrink-0 items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-bold sm:text-xs ${styles}`}
+        >
             <Icon className="h-3 w-3 shrink-0 stroke-[2.5]" />
             <span>{label}</span>
-            {subtitle ? <span className="hidden font-normal opacity-70 sm:inline">{subtitle}</span> : null}
         </span>
     );
 }
 
-export function PlatformStatCardGrid({ item, className, onOpenDetail, comparisonMode = 'average' }: CardProps) {
+export function PlatformStatCardGrid({ item, className, onOpenDetail }: CardProps) {
     return (
         <div
             className={cn(
@@ -97,20 +113,9 @@ export function PlatformStatCardGrid({ item, className, onOpenDetail, comparison
                     >
                         {formatCurrency(item.this_month)}
                     </p>
-                    <div className="mt-0.5 flex shrink-0 items-center">
-                        {comparisonMode === 'last_month' ? (
-                            <StatChangeBadge
-                                percentage={item.month_change_percentage}
-                                direction={item.month_change_direction}
-                                subtitle="vs bln lalu"
-                            />
-                        ) : (
-                            <StatChangeBadge
-                                percentage={item.avg_change_percentage}
-                                direction={item.avg_change_direction}
-                                subtitle="vs rata-rata"
-                            />
-                        )}
+                    <div className="mt-0.5 flex shrink-0 flex-wrap items-center gap-1 sm:flex-nowrap">
+                        <AvgChangeBadge percentage={item.avg_change_percentage} direction={item.avg_change_direction} />
+                        <MonthChangeBadge percentage={item.month_change_percentage} direction={item.month_change_direction} />
                     </div>
                 </button>
 
@@ -135,7 +140,7 @@ export function PlatformStatCardGrid({ item, className, onOpenDetail, comparison
     );
 }
 
-export function PlatformStatCardCarousel({ item, className, onOpenDetail, comparisonMode = 'average' }: CardProps) {
+export function PlatformStatCardCarousel({ item, className, onOpenDetail }: CardProps) {
     return (
         <div
             className={cn(
@@ -167,20 +172,9 @@ export function PlatformStatCardCarousel({ item, className, onOpenDetail, compar
                     <p className="text-[clamp(1.3rem,1.6vw,2rem)] leading-tight font-bold tracking-tight text-slate-800">
                         {formatCurrency(item.this_month)}
                     </p>
-                    <div className="mt-auto pt-2">
-                        {comparisonMode === 'last_month' ? (
-                            <StatChangeBadge
-                                percentage={item.month_change_percentage}
-                                direction={item.month_change_direction}
-                                subtitle="vs bln lalu"
-                            />
-                        ) : (
-                            <StatChangeBadge
-                                percentage={item.avg_change_percentage}
-                                direction={item.avg_change_direction}
-                                subtitle="vs rata-rata"
-                            />
-                        )}
+                    <div className="mt-auto flex items-center gap-1.5 pt-2">
+                        <AvgChangeBadge percentage={item.avg_change_percentage} direction={item.avg_change_direction} />
+                        <MonthChangeBadge percentage={item.month_change_percentage} direction={item.month_change_direction} />
                     </div>
                     <p className="mt-2 text-[10px] text-slate-500">Rincian per bulan</p>
                 </button>
