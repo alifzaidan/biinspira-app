@@ -206,7 +206,32 @@ export default function TvDashboard({ platformStats, generatedAt }: TvDashboardP
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2">
-                                <TabsList className="h-auto rounded-full border border-white/45 bg-white/20 p-1 text-white">
+                                {/* Keterangan / Legend Warna Perbandingan */}
+                                <div className="flex flex-wrap items-center gap-2 rounded-full border border-white/45 bg-white/20 px-3 py-2 text-xs text-white backdrop-blur-sm sm:gap-3">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-sm font-bold text-white/95 sm:text-xs">Kiri (vs Rata-rata):</span>
+                                        <span className="inline-flex items-center gap-0.5 rounded-full border border-indigo-400/80 bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-800">
+                                            ↑ Naik
+                                        </span>
+                                        <span className="inline-flex items-center gap-0.5 rounded-full border border-amber-400/80 bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
+                                            ↓ Turun
+                                        </span>
+                                    </div>
+
+                                    <span className="hidden text-[10px] text-white/40 sm:inline">•</span>
+
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-sm font-bold text-white/95 sm:text-xs">Kanan (vs Bulan Lalu):</span>
+                                        <span className="inline-flex items-center gap-0.5 rounded-full border border-emerald-400/80 bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
+                                            ↑ Naik
+                                        </span>
+                                        <span className="inline-flex items-center gap-0.5 rounded-full border border-rose-400/80 bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold text-rose-800">
+                                            ↓ Turun
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <TabsList className="h-auto rounded-full border border-white/45 bg-white/20 p-1 text-white backdrop-blur-sm">
                                     <TabsTrigger
                                         value="grid"
                                         className="h-7 rounded-full px-3 text-xs font-medium text-white data-[state=active]:bg-white/30 data-[state=active]:text-white"
@@ -221,7 +246,7 @@ export default function TvDashboard({ platformStats, generatedAt }: TvDashboardP
                                     </TabsTrigger>
                                 </TabsList>
 
-                                <p className="rounded-full border border-white/45 bg-white/20 px-3 py-1.5 text-xs font-medium text-white sm:text-sm">
+                                <p className="rounded-full border border-white/45 bg-white/20 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm sm:text-sm">
                                     Update: {new Date(generatedAt).toLocaleString('id-ID')}
                                 </p>
                             </div>

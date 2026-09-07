@@ -26,13 +26,30 @@ function getPlatformInitials(label?: string) {
         .join('');
 }
 
-function ChangePill({ percentage, direction }: { percentage: number; direction: 'up' | 'down' | 'flat' }) {
+function ChangePill({
+    percentage,
+    direction,
+    variant = 'month',
+}: {
+    percentage: number;
+    direction: 'up' | 'down' | 'flat';
+    variant?: 'month' | 'avg';
+}) {
     if (direction === 'flat' || percentage === 0) {
         return <span className="text-[10px] font-semibold text-slate-400">Stabil</span>;
     }
     const isUp = direction === 'up';
+    const styles =
+        variant === 'avg'
+            ? isUp
+                ? 'border border-indigo-200 bg-indigo-50 text-indigo-700'
+                : 'border border-amber-200 bg-amber-50 text-amber-700'
+            : isUp
+              ? 'bg-emerald-50 text-emerald-600'
+              : 'bg-rose-50 text-rose-600';
+
     return (
-        <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${isUp ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+        <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${styles}`}>
             {isUp ? <ArrowUpRight className="h-2.5 w-2.5" /> : <ArrowDownRight className="h-2.5 w-2.5" />}
             {isUp ? '+' : '-'}{percentage.toFixed(1)}%
         </span>
@@ -167,11 +184,11 @@ export default function PlatformDrilldownDialog({ open, onOpenChange, loading, e
                                                                 <div className="space-y-1 border-t pt-1.5 text-xs">
                                                                     <div className="flex items-center justify-between gap-2">
                                                                         <span className="text-slate-500">vs Bulan lalu</span>
-                                                                        <ChangePill percentage={prevChange.percentage} direction={prevChange.direction} />
+                                                                        <ChangePill percentage={prevChange.percentage} direction={prevChange.direction} variant="month" />
                                                                     </div>
                                                                     <div className="flex items-center justify-between gap-2">
                                                                         <span className="text-slate-500">vs Rata-rata</span>
-                                                                        <ChangePill percentage={avgChange.percentage} direction={avgChange.direction} />
+                                                                        <ChangePill percentage={avgChange.percentage} direction={avgChange.direction} variant="avg" />
                                                                     </div>
                                                                     {payload.avg_value > 0 && (
                                                                         <div className="flex items-center justify-between gap-2 border-t pt-1">

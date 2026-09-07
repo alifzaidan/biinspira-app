@@ -338,10 +338,17 @@ class TvDashboardController extends Controller
         $monthChange = $this->buildChange($thisMonthRevenue, $lastMonthRevenue);
         $dayChange = $this->buildChange($todayRevenue, $yesterdayRevenue);
 
-        // avg_change: bandingkan bulan ini terhadap rata-rata bulanan tahun ini
-        // rata-rata = total_this_year / jumlah bulan yang sudah berjalan
+        // avg_change: bandingkan bulan ini terhadap rata-rata bulanan bulan-bulan sebelumnya (Jan s.d. bulan kemarin)
+        // Konsisten dengan rincian bulanan di drilldown dialog:
+        // rata-rata = (total_this_year - this_month) / (current_month - 1)
         $currentMonth = (int) now()->month; // 1-12
-        $monthlyAvg = $currentMonth > 0 ? $totalRevenue / $currentMonth : 0.0;
+        $previousMonths = $currentMonth - 1;
+        if ($previousMonths > 0) {
+            $priorRevenue = max(0.0, $totalRevenue - $thisMonthRevenue);
+            $monthlyAvg = $priorRevenue / $previousMonths;
+        } else {
+            $monthlyAvg = $totalRevenue;
+        }
         $avgChange = $this->buildChange($thisMonthRevenue, $monthlyAvg);
 
         return [
@@ -350,7 +357,9 @@ class TvDashboardController extends Controller
             'logo' => $logo,
             'total' => $totalRevenue,
             'this_month' => $thisMonthRevenue,
+            'last_month' => $lastMonthRevenue,
             'today' => $todayRevenue,
+            'yesterday' => $yesterdayRevenue,
             'month_change_percentage' => $monthChange['percentage'],
             'month_change_direction' => $monthChange['direction'],
             'day_change_percentage' => $dayChange['percentage'],
@@ -729,7 +738,9 @@ class TvDashboardController extends Controller
             'logo' => $logo,
             'total' => 0.0,
             'this_month' => 0.0,
+            'last_month' => 0.0,
             'today' => 0.0,
+            'yesterday' => 0.0,
             'month_change_percentage' => 0.0,
             'month_change_direction' => 'flat',
             'day_change_percentage' => 0.0,
