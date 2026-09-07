@@ -70,6 +70,9 @@ export default function GroupDrilldownDialog({ open, onOpenChange, loading, erro
                 value: point.value,
                 change_percentage: point.change_percentage ?? 0,
                 change_direction: point.change_direction ?? 'flat',
+                avg_change_percentage: point.avg_change_percentage ?? 0,
+                avg_change_direction: point.avg_change_direction ?? 'flat',
+                avg_value: point.avg_value ?? 0,
             };
 
             if (point.platforms) {
@@ -244,8 +247,6 @@ export default function GroupDrilldownDialog({ open, onOpenChange, loading, erro
                                                 return null;
                                             }
 
-                                            const hasChange = dataPoint.change_percentage !== undefined && dataPoint.change_percentage > 0;
-
                                             return (
                                                 <div className="min-w-56 space-y-2 rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-xl backdrop-blur">
                                                     <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 font-bold">
@@ -284,25 +285,72 @@ export default function GroupDrilldownDialog({ open, onOpenChange, loading, erro
                                                         </div>
                                                     )}
 
-                                                    {hasChange && (
-                                                        <div className="flex items-center justify-between pt-0.5 text-[11px]">
-                                                            <span className="text-slate-500">Perubahan:</span>
-                                                            {dataPoint.change_direction === 'up' && (
-                                                                <span className="flex items-center font-bold text-emerald-600">
-                                                                    <ArrowUpRight className="mr-0.5 h-3 w-3" />+
-                                                                    {dataPoint.change_percentage.toFixed(2)}%
-                                                                </span>
-                                                            )}
-                                                            {dataPoint.change_direction === 'down' && (
-                                                                <span className="flex items-center font-bold text-rose-600">
-                                                                    <ArrowDownRight className="mr-0.5 h-3 w-3" />-
-                                                                    {dataPoint.change_percentage.toFixed(2)}%
-                                                                </span>
-                                                            )}
-                                                            {dataPoint.change_direction === 'flat' && (
-                                                                <span className="font-medium text-slate-500">Stabil</span>
+                                                    {isMonthlyMetric ? (
+                                                        <div className="space-y-1 border-t pt-1.5 text-[11px]">
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-slate-500">vs Bulan lalu</span>
+                                                                {dataPoint.change_direction === 'up' && (
+                                                                    <span className="flex items-center font-bold text-emerald-600">
+                                                                        <ArrowUpRight className="mr-0.5 h-3 w-3" />+
+                                                                        {dataPoint.change_percentage.toFixed(2)}%
+                                                                    </span>
+                                                                )}
+                                                                {dataPoint.change_direction === 'down' && (
+                                                                    <span className="flex items-center font-bold text-rose-600">
+                                                                        <ArrowDownRight className="mr-0.5 h-3 w-3" />-
+                                                                        {dataPoint.change_percentage.toFixed(2)}%
+                                                                    </span>
+                                                                )}
+                                                                {dataPoint.change_direction === 'flat' && (
+                                                                    <span className="font-medium text-slate-500">Stabil</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-slate-500">vs Rata-rata</span>
+                                                                {dataPoint.avg_change_direction === 'up' && (
+                                                                    <span className="flex items-center font-bold text-emerald-600">
+                                                                        <ArrowUpRight className="mr-0.5 h-3 w-3" />+
+                                                                        {dataPoint.avg_change_percentage.toFixed(2)}%
+                                                                    </span>
+                                                                )}
+                                                                {dataPoint.avg_change_direction === 'down' && (
+                                                                    <span className="flex items-center font-bold text-rose-600">
+                                                                        <ArrowDownRight className="mr-0.5 h-3 w-3" />-
+                                                                        {dataPoint.avg_change_percentage.toFixed(2)}%
+                                                                    </span>
+                                                                )}
+                                                                {dataPoint.avg_change_direction === 'flat' && (
+                                                                    <span className="font-medium text-slate-500">Stabil</span>
+                                                                )}
+                                                            </div>
+                                                            {dataPoint.avg_value > 0 && (
+                                                                <div className="flex items-center justify-between border-t pt-1">
+                                                                    <span className="text-slate-400">Rata-rata</span>
+                                                                    <span className="font-semibold text-slate-700">{formatCurrency(dataPoint.avg_value)}</span>
+                                                                </div>
                                                             )}
                                                         </div>
+                                                    ) : (
+                                                        dataPoint.change_percentage > 0 && (
+                                                            <div className="flex items-center justify-between pt-0.5 text-[11px]">
+                                                                <span className="text-slate-500">Perubahan:</span>
+                                                                {dataPoint.change_direction === 'up' && (
+                                                                    <span className="flex items-center font-bold text-emerald-600">
+                                                                        <ArrowUpRight className="mr-0.5 h-3 w-3" />+
+                                                                        {dataPoint.change_percentage.toFixed(2)}%
+                                                                    </span>
+                                                                )}
+                                                                {dataPoint.change_direction === 'down' && (
+                                                                    <span className="flex items-center font-bold text-rose-600">
+                                                                        <ArrowDownRight className="mr-0.5 h-3 w-3" />-
+                                                                        {dataPoint.change_percentage.toFixed(2)}%
+                                                                    </span>
+                                                                )}
+                                                                {dataPoint.change_direction === 'flat' && (
+                                                                    <span className="font-medium text-slate-500">Stabil</span>
+                                                                )}
+                                                            </div>
+                                                        )
                                                     )}
                                                 </div>
                                             );

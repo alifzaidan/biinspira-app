@@ -1,12 +1,16 @@
 import { cn } from '@/lib/utils';
+import { ArrowDownRight, ArrowRight, ArrowUpRight } from 'lucide-react';
 import type { DrilldownMetric, PlatformStat } from '../types';
 import { formatCurrency } from '../utils';
 import ChangeBadge from './change-badge';
+
+export type ComparisonMode = 'average' | 'last_month';
 
 type CardProps = {
     item: PlatformStat;
     className?: string;
     onOpenDetail: (platformKey: string, metric: DrilldownMetric) => void;
+    comparisonMode?: ComparisonMode;
 };
 
 function PlatformLogo({ item }: { item: PlatformStat }) {
@@ -21,7 +25,36 @@ function PlatformLogo({ item }: { item: PlatformStat }) {
     );
 }
 
-export function PlatformStatCardGrid({ item, className, onOpenDetail }: CardProps) {
+function StatChangeBadge({
+    percentage,
+    direction,
+    subtitle,
+}: {
+    percentage: number;
+    direction: 'up' | 'down' | 'flat';
+    subtitle?: string;
+}) {
+    const isUp = direction === 'up';
+    const isDown = direction === 'down';
+    const styles = isUp
+        ? 'border-emerald-400/80 bg-emerald-100 text-emerald-800'
+        : isDown
+          ? 'border-rose-400/80 bg-rose-100 text-rose-800'
+          : 'border-slate-300/80 bg-slate-100 text-slate-700';
+    const Icon = isUp ? ArrowUpRight : isDown ? ArrowDownRight : ArrowRight;
+    const sign = isUp ? '+' : isDown ? '-' : '';
+    const label = direction === 'flat' ? '0%' : `${sign}${percentage.toFixed(2)}%`;
+
+    return (
+        <span className={`inline-flex shrink-0 items-center gap-0.5 rounded-full border px-2 py-0.5 text-[10px] font-bold sm:text-xs ${styles}`}>
+            <Icon className="h-3 w-3 shrink-0 stroke-[2.5]" />
+            <span>{label}</span>
+            {subtitle ? <span className="hidden font-normal opacity-70 sm:inline">{subtitle}</span> : null}
+        </span>
+    );
+}
+
+export function PlatformStatCardGrid({ item, className, onOpenDetail, comparisonMode = 'average' }: CardProps) {
     return (
         <div
             className={cn(
@@ -29,7 +62,7 @@ export function PlatformStatCardGrid({ item, className, onOpenDetail }: CardProp
                 className,
             )}
         >
-            <div className="mb-1 flex items-center justify-between gap-2 shrink-0">
+            <div className="mb-1 flex shrink-0 items-center justify-between gap-2">
                 <h2 className="truncate text-base font-bold text-slate-800 xl:text-lg" title={item.label}>
                     {item.label}
                 </h2>
@@ -38,16 +71,16 @@ export function PlatformStatCardGrid({ item, className, onOpenDetail }: CardProp
                 </div>
             </div>
 
-            <div className="grid flex-1 grid-cols-1 gap-1.5 min-h-0 overflow-hidden sm:grid-cols-3">
-                <div className="flex min-w-0 min-h-0 flex-col justify-between overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-1.5 xl:p-2">
+            <div className="grid min-h-0 flex-1 grid-cols-1 gap-1.5 overflow-hidden sm:grid-cols-3">
+                <div className="flex min-h-0 min-w-0 flex-col justify-between overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-1.5 xl:p-2">
                     <p className="mb-0.5 truncate text-[10px] font-bold tracking-wider text-slate-500 uppercase xl:text-[11px]">Total Tahun Ini</p>
                     <p
-                        className="my-auto truncate text-sm font-bold tracking-tight text-slate-900 leading-none sm:text-base xl:text-lg 2xl:text-3xl py-0.5"
+                        className="my-auto truncate py-0.5 text-sm leading-none font-bold tracking-tight text-slate-900 sm:text-base xl:text-lg 2xl:text-3xl"
                         title={formatCurrency(item.total)}
                     >
                         {formatCurrency(item.total)}
                     </p>
-                    <div className="invisible mt-0.5 shrink-0 flex items-center" aria-hidden="true">
+                    <div className="invisible mt-0.5 flex shrink-0 items-center" aria-hidden="true">
                         <ChangeBadge percentage={0} direction="flat" />
                     </div>
                 </div>
@@ -55,33 +88,45 @@ export function PlatformStatCardGrid({ item, className, onOpenDetail }: CardProp
                 <button
                     type="button"
                     onClick={() => onOpenDetail(item.key, 'month')}
-                    className="flex min-w-0 min-h-0 flex-col justify-between overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-1.5 text-left transition hover:cursor-pointer hover:border-sky-300 hover:bg-sky-50 xl:p-2"
+                    className="flex min-h-0 min-w-0 flex-col justify-between overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-1.5 text-left transition hover:cursor-pointer hover:border-sky-300 hover:bg-sky-50 xl:p-2"
                 >
                     <p className="mb-0.5 truncate text-[10px] font-bold tracking-wider text-slate-500 uppercase xl:text-[11px]">Bulan Ini</p>
                     <p
-                        className="my-auto truncate text-sm font-bold tracking-tight text-slate-900 leading-none sm:text-base xl:text-lg 2xl:text-3xl py-0.5"
+                        className="my-auto truncate py-0.5 text-sm leading-none font-bold tracking-tight text-slate-900 sm:text-base xl:text-lg 2xl:text-3xl"
                         title={formatCurrency(item.this_month)}
                     >
                         {formatCurrency(item.this_month)}
                     </p>
-                    <div className="mt-0.5 shrink-0 flex items-center">
-                        <ChangeBadge percentage={item.month_change_percentage} direction={item.month_change_direction} />
+                    <div className="mt-0.5 flex shrink-0 items-center">
+                        {comparisonMode === 'last_month' ? (
+                            <StatChangeBadge
+                                percentage={item.month_change_percentage}
+                                direction={item.month_change_direction}
+                                subtitle="vs bln lalu"
+                            />
+                        ) : (
+                            <StatChangeBadge
+                                percentage={item.avg_change_percentage}
+                                direction={item.avg_change_direction}
+                                subtitle="vs rata-rata"
+                            />
+                        )}
                     </div>
                 </button>
 
                 <button
                     type="button"
                     onClick={() => onOpenDetail(item.key, 'day')}
-                    className="flex min-w-0 min-h-0 flex-col justify-between overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-1.5 text-left transition hover:cursor-pointer hover:border-sky-300 hover:bg-sky-50 xl:p-2"
+                    className="flex min-h-0 min-w-0 flex-col justify-between overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-1.5 text-left transition hover:cursor-pointer hover:border-sky-300 hover:bg-sky-50 xl:p-2"
                 >
                     <p className="mb-0.5 truncate text-[10px] font-bold tracking-wider text-slate-500 uppercase xl:text-[11px]">Hari Ini</p>
                     <p
-                        className="my-auto truncate text-sm font-bold tracking-tight text-slate-900 leading-none sm:text-base xl:text-lg 2xl:text-3xl py-0.5"
+                        className="my-auto truncate py-0.5 text-sm leading-none font-bold tracking-tight text-slate-900 sm:text-base xl:text-lg 2xl:text-3xl"
                         title={formatCurrency(item.today)}
                     >
                         {formatCurrency(item.today)}
                     </p>
-                    <div className="mt-0.5 shrink-0 flex items-center">
+                    <div className="mt-0.5 flex shrink-0 items-center">
                         <ChangeBadge percentage={item.day_change_percentage} direction={item.day_change_direction} />
                     </div>
                 </button>
@@ -90,7 +135,7 @@ export function PlatformStatCardGrid({ item, className, onOpenDetail }: CardProp
     );
 }
 
-export function PlatformStatCardCarousel({ item, className, onOpenDetail }: CardProps) {
+export function PlatformStatCardCarousel({ item, className, onOpenDetail, comparisonMode = 'average' }: CardProps) {
     return (
         <div
             className={cn(
@@ -123,7 +168,19 @@ export function PlatformStatCardCarousel({ item, className, onOpenDetail }: Card
                         {formatCurrency(item.this_month)}
                     </p>
                     <div className="mt-auto pt-2">
-                        <ChangeBadge percentage={item.month_change_percentage} direction={item.month_change_direction} />
+                        {comparisonMode === 'last_month' ? (
+                            <StatChangeBadge
+                                percentage={item.month_change_percentage}
+                                direction={item.month_change_direction}
+                                subtitle="vs bln lalu"
+                            />
+                        ) : (
+                            <StatChangeBadge
+                                percentage={item.avg_change_percentage}
+                                direction={item.avg_change_direction}
+                                subtitle="vs rata-rata"
+                            />
+                        )}
                     </div>
                     <p className="mt-2 text-[10px] text-slate-500">Rincian per bulan</p>
                 </button>

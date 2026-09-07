@@ -9,6 +9,9 @@ export type PlatformStat = {
     month_change_direction: 'up' | 'down' | 'flat';
     day_change_percentage: number;
     day_change_direction: 'up' | 'down' | 'flat';
+    avg_change_percentage: number;
+    avg_change_direction: 'up' | 'down' | 'flat';
+    monthly_avg: number;
 };
 
 export interface TvDashboardProps {
@@ -31,6 +34,9 @@ export type DrilldownPoint = {
     value: number;
     change_percentage?: number;
     change_direction?: 'up' | 'down' | 'flat';
+    avg_change_percentage?: number;
+    avg_change_direction?: 'up' | 'down' | 'flat';
+    avg_value?: number;
     platforms?: Record<string, number>;
 };
 

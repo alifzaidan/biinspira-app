@@ -161,7 +161,33 @@ class TvDashboardController extends Controller
                 $points[$i]['change_direction'] = $change['direction'];
             }
 
+            // avg_change per titik bulanan: rata-rata dari Jan s.d bulan sebelumnya (non-zero)
+            if ($metric === 'month') {
+                for ($i = 0; $i < count($points); $i++) {
+                    if ($i === 0) {
+                        $points[$i]['avg_change_percentage'] = 0.0;
+                        $points[$i]['avg_change_direction'] = 'flat';
+                        $points[$i]['avg_value'] = 0.0;
+                        continue;
+                    }
+                    $slice = array_slice($points, 0, $i);
+                    $nonZeroSlice = array_filter($slice, fn($p) => ($p['value'] ?? 0.0) > 0.0);
+                    if (empty($nonZeroSlice)) {
+                        $points[$i]['avg_change_percentage'] = 0.0;
+                        $points[$i]['avg_change_direction'] = 'flat';
+                        $points[$i]['avg_value'] = 0.0;
+                        continue;
+                    }
+                    $avg = array_sum(array_column(array_values($nonZeroSlice), 'value')) / count($nonZeroSlice);
+                    $avgChange = $this->buildChange($points[$i]['value'], $avg);
+                    $points[$i]['avg_change_percentage'] = $avgChange['percentage'];
+                    $points[$i]['avg_change_direction'] = $avgChange['direction'];
+                    $points[$i]['avg_value'] = round($avg);
+                }
+            }
+
             $totalGroup = array_reduce($points, fn($sum, $row) => $sum + ($row['value'] ?? 0), 0.0);
+
 
             return [
                 'platform' => 'group',
@@ -312,6 +338,12 @@ class TvDashboardController extends Controller
         $monthChange = $this->buildChange($thisMonthRevenue, $lastMonthRevenue);
         $dayChange = $this->buildChange($todayRevenue, $yesterdayRevenue);
 
+        // avg_change: bandingkan bulan ini terhadap rata-rata bulanan tahun ini
+        // rata-rata = total_this_year / jumlah bulan yang sudah berjalan
+        $currentMonth = (int) now()->month; // 1-12
+        $monthlyAvg = $currentMonth > 0 ? $totalRevenue / $currentMonth : 0.0;
+        $avgChange = $this->buildChange($thisMonthRevenue, $monthlyAvg);
+
         return [
             'key' => $key,
             'label' => $label,
@@ -323,6 +355,9 @@ class TvDashboardController extends Controller
             'month_change_direction' => $monthChange['direction'],
             'day_change_percentage' => $dayChange['percentage'],
             'day_change_direction' => $dayChange['direction'],
+            'avg_change_percentage' => $avgChange['percentage'],
+            'avg_change_direction' => $avgChange['direction'],
+            'monthly_avg' => round($monthlyAvg),
         ];
     }
 
@@ -579,6 +614,30 @@ class TvDashboardController extends Controller
             $points[$i]['change_direction'] = $change['direction'];
         }
 
+        // Calculate avg_change per titik: rata-rata dari Januari s.d bulan sebelumnya (non-zero)
+        for ($i = 0; $i < count($points); $i++) {
+            if ($i === 0) {
+                $points[$i]['avg_change_percentage'] = 0.0;
+                $points[$i]['avg_change_direction'] = 'flat';
+                $points[$i]['avg_value'] = 0.0;
+                continue;
+            }
+            // Kumpulkan nilai dari Jan s.d bulan ke-(i-1) yang non-zero
+            $slice = array_slice($points, 0, $i);
+            $nonZeroSlice = array_filter($slice, fn($p) => ($p['value'] ?? 0.0) > 0.0);
+            if (empty($nonZeroSlice)) {
+                $points[$i]['avg_change_percentage'] = 0.0;
+                $points[$i]['avg_change_direction'] = 'flat';
+                $points[$i]['avg_value'] = 0.0;
+                continue;
+            }
+            $avg = array_sum(array_column(array_values($nonZeroSlice), 'value')) / count($nonZeroSlice);
+            $avgChange = $this->buildChange($points[$i]['value'], $avg);
+            $points[$i]['avg_change_percentage'] = $avgChange['percentage'];
+            $points[$i]['avg_change_direction'] = $avgChange['direction'];
+            $points[$i]['avg_value'] = round($avg);
+        }
+
         return [
             'platform' => $platformKey,
             'platform_label' => $this->platformLabels[$platformKey] ?? $platformKey,
@@ -675,6 +734,9 @@ class TvDashboardController extends Controller
             'month_change_direction' => 'flat',
             'day_change_percentage' => 0.0,
             'day_change_direction' => 'flat',
+            'avg_change_percentage' => 0.0,
+            'avg_change_direction' => 'flat',
+            'monthly_avg' => 0.0,
         ];
     }
 

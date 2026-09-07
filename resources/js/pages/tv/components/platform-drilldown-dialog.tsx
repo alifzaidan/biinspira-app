@@ -17,10 +17,7 @@ type PlatformDrilldownDialogProps = {
 };
 
 function getPlatformInitials(label?: string) {
-    if (!label) {
-        return 'NA';
-    }
-
+    if (!label) return 'NA';
     return label
         .split(' ')
         .filter(Boolean)
@@ -29,43 +26,46 @@ function getPlatformInitials(label?: string) {
         .join('');
 }
 
+function ChangePill({ percentage, direction }: { percentage: number; direction: 'up' | 'down' | 'flat' }) {
+    if (direction === 'flat' || percentage === 0) {
+        return <span className="text-[10px] font-semibold text-slate-400">Stabil</span>;
+    }
+    const isUp = direction === 'up';
+    return (
+        <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${isUp ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+            {isUp ? <ArrowUpRight className="h-2.5 w-2.5" /> : <ArrowDownRight className="h-2.5 w-2.5" />}
+            {isUp ? '+' : '-'}{percentage.toFixed(1)}%
+        </span>
+    );
+}
+
 export default function PlatformDrilldownDialog({ open, onOpenChange, loading, error, data, platformLogo }: PlatformDrilldownDialogProps) {
     const chartConfig = {
-        value: {
-            label: 'Nominal',
-            color: 'var(--chart-2)',
-        },
+        value: { label: 'Nominal', color: 'var(--chart-2)' },
     } satisfies ChartConfig;
 
-    const chartData = useMemo(() => {
-        if (!data) {
-            return [];
-        }
+    const isMonthlyMetric = data?.metric === 'month';
 
+    const chartData = useMemo(() => {
+        if (!data) return [];
         return data.points.map((point) => ({
             period: point.label,
             value: point.value,
             change_percentage: point.change_percentage ?? 0,
             change_direction: point.change_direction ?? 'flat',
+            avg_change_percentage: point.avg_change_percentage ?? 0,
+            avg_change_direction: point.avg_change_direction ?? 'flat',
+            avg_value: point.avg_value ?? 0,
         }));
     }, [data]);
 
     const chartWidth = useMemo(() => {
-        const minWidth = 620;
-        const maxWidth = 1600;
-        const calculatedWidth = chartData.length * 52;
-
-        return Math.min(maxWidth, Math.max(minWidth, calculatedWidth));
+        return Math.min(1600, Math.max(620, chartData.length * 52));
     }, [chartData]);
 
     const monthlyMinChartWidth = useMemo(() => {
-        const minWidth = 620;
-        const calculatedWidth = chartData.length * 52;
-
-        return Math.max(minWidth, calculatedWidth);
+        return Math.max(620, chartData.length * 52);
     }, [chartData]);
-
-    const isMonthlyMetric = data?.metric === 'month';
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -105,8 +105,10 @@ export default function PlatformDrilldownDialog({ open, onOpenChange, loading, e
 
                 {!loading && !error && data ? (
                     <div className="min-w-0 space-y-3">
-                        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                            Total Periode: <span className="font-semibold text-slate-900">{formatCurrency(data.total)}</span>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                                Total Periode: <span className="font-semibold text-slate-900">{formatCurrency(data.total)}</span>
+                            </div>
                         </div>
 
                         <div className="w-full max-w-full min-w-0 overflow-x-auto rounded-lg border border-slate-200 bg-white p-2">
@@ -121,12 +123,7 @@ export default function PlatformDrilldownDialog({ open, onOpenChange, loading, e
                                 <BarChart
                                     accessibilityLayer
                                     data={chartData}
-                                    margin={{
-                                        top: 20,
-                                        left: 8,
-                                        right: 8,
-                                        bottom: 8,
-                                    }}
+                                    margin={{ top: 20, left: 8, right: 8, bottom: 8 }}
                                 >
                                     <CartesianGrid vertical={false} />
                                     <XAxis
@@ -137,11 +134,7 @@ export default function PlatformDrilldownDialog({ open, onOpenChange, loading, e
                                         interval={0}
                                         tickFormatter={(value) => {
                                             const period = String(value);
-
-                                            if (isMonthlyMetric) {
-                                                return period.slice(0, 3);
-                                            }
-
+                                            if (isMonthlyMetric) return period.slice(0, 3);
                                             return period.length > 7 ? `${period.slice(0, 7)}...` : period;
                                         }}
                                         angle={!isMonthlyMetric && chartData.length > 16 ? -35 : 0}
@@ -155,20 +148,47 @@ export default function PlatformDrilldownDialog({ open, onOpenChange, loading, e
                                                 indicator="line"
                                                 formatter={(value, _name, item) => {
                                                     const payload = item.payload as any;
-                                                    const hasChange = payload.change_percentage !== undefined && payload.change_percentage > 0;
-                                                    
+                                                    const prevChange = {
+                                                        percentage: payload.change_percentage as number,
+                                                        direction: payload.change_direction as 'up' | 'down' | 'flat',
+                                                    };
+                                                    const avgChange = {
+                                                        percentage: payload.avg_change_percentage as number,
+                                                        direction: payload.avg_change_direction as 'up' | 'down' | 'flat',
+                                                    };
+
                                                     return (
-                                                        <div className="space-y-2">
+                                                        <div className="space-y-1.5">
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <span className="text-muted-foreground">{payload.period}</span>
                                                                 <span className="font-medium text-foreground">{formatCurrency(Number(value) || 0)}</span>
                                                             </div>
-                                                            {hasChange && (
-                                                                <div className="flex items-center gap-1.5 pt-1 border-t text-xs">
+                                                            {isMonthlyMetric && (
+                                                                <div className="space-y-1 border-t pt-1.5 text-xs">
+                                                                    <div className="flex items-center justify-between gap-2">
+                                                                        <span className="text-slate-500">vs Bulan lalu</span>
+                                                                        <ChangePill percentage={prevChange.percentage} direction={prevChange.direction} />
+                                                                    </div>
+                                                                    <div className="flex items-center justify-between gap-2">
+                                                                        <span className="text-slate-500">vs Rata-rata</span>
+                                                                        <ChangePill percentage={avgChange.percentage} direction={avgChange.direction} />
+                                                                    </div>
+                                                                    {payload.avg_value > 0 && (
+                                                                        <div className="flex items-center justify-between gap-2 border-t pt-1">
+                                                                            <span className="text-[10px] text-slate-400">Rata-rata</span>
+                                                                            <span className="text-[10px] font-semibold text-slate-700">
+                                                                                {formatCurrency(payload.avg_value)}
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            {!isMonthlyMetric && payload.change_percentage > 0 && (
+                                                                <div className="flex items-center gap-1.5 border-t pt-1 text-xs">
                                                                     {payload.change_direction === 'up' && (
                                                                         <>
                                                                             <ArrowUpRight className="h-3 w-3 text-emerald-600" />
-                                                                            <span className="text-emerald-600 font-semibold">
+                                                                            <span className="font-semibold text-emerald-600">
                                                                                 +{payload.change_percentage.toFixed(2)}%
                                                                             </span>
                                                                         </>
@@ -176,7 +196,7 @@ export default function PlatformDrilldownDialog({ open, onOpenChange, loading, e
                                                                     {payload.change_direction === 'down' && (
                                                                         <>
                                                                             <ArrowDownRight className="h-3 w-3 text-rose-600" />
-                                                                            <span className="text-rose-600 font-semibold">
+                                                                            <span className="font-semibold text-rose-600">
                                                                                 -{payload.change_percentage.toFixed(2)}%
                                                                             </span>
                                                                         </>
@@ -208,9 +228,7 @@ export default function PlatformDrilldownDialog({ open, onOpenChange, loading, e
                                             fontSize={9}
                                             formatter={(value: number, _name: any, props: any) => {
                                                 const payload = props?.payload;
-                                                if (!value || !payload || payload.change_direction === 'flat') {
-                                                    return '';
-                                                }
+                                                if (!value || !payload || payload.change_direction === 'flat') return '';
                                                 const arrow = payload.change_direction === 'up' ? '↑' : '↓';
                                                 return `${arrow} ${value.toFixed(1)}%`;
                                             }}
