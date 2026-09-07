@@ -1,3 +1,4 @@
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from 'lucide-react';
 import type { DrilldownMetric, PlatformStat } from '../types';
@@ -23,7 +24,15 @@ function PlatformLogo({ item }: { item: PlatformStat }) {
 }
 
 // Badge vs Rata-rata (sebelah kiri) - warna Indigo (naik) / Amber-Oranye (turun)
-function AvgChangeBadge({ percentage, direction }: { percentage: number; direction: 'up' | 'down' | 'flat' }) {
+function AvgChangeBadge({
+    percentage,
+    direction,
+    monthlyAvg,
+}: {
+    percentage: number;
+    direction: 'up' | 'down' | 'flat';
+    monthlyAvg?: number;
+}) {
     const isUp = direction === 'up';
     const isDown = direction === 'down';
     const styles = isUp
@@ -34,20 +43,42 @@ function AvgChangeBadge({ percentage, direction }: { percentage: number; directi
     const Icon = isUp ? ArrowUpRight : isDown ? ArrowDownRight : ArrowRight;
     const sign = isUp ? '+' : isDown ? '-' : '';
     const label = direction === 'flat' ? '0%' : `${sign}${percentage.toFixed(2)}%`;
+    const avgText = monthlyAvg !== undefined ? formatCurrency(monthlyAvg) : null;
+    const statusLabel = isUp ? 'Naik' : isDown ? 'Turun' : 'Stabil';
+    const tooltipTitle = `vs Rata-rata (${statusLabel})`;
+    const titleText = avgText ? `${tooltipTitle}: ${avgText}` : tooltipTitle;
 
     return (
-        <span
-            title="vs Rata-rata"
-            className={`inline-flex shrink-0 items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-bold sm:text-xs ${styles}`}
-        >
-            <Icon className="h-3 w-3 shrink-0 stroke-[2.5]" />
-            <span>{label}</span>
-        </span>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <span
+                    title={titleText}
+                    className={`inline-flex shrink-0 items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-bold sm:text-xs ${styles} cursor-pointer`}
+                >
+                    <Icon className="h-3 w-3 shrink-0 stroke-[2.5]" />
+                    <span>{label}</span>
+                </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs text-white shadow-xl">
+                <p className={`text-[10px] font-semibold ${isUp ? 'text-indigo-300' : isDown ? 'text-amber-300' : 'text-slate-300'}`}>
+                    vs Rata-rata Bulanan ({statusLabel})
+                </p>
+                {avgText && <p className="text-xs font-bold text-white">{avgText}</p>}
+            </TooltipContent>
+        </Tooltip>
     );
 }
 
 // Badge vs Bulan Lalu (sebelah kanan) - warna Emerald (naik) / Rose (turun)
-function MonthChangeBadge({ percentage, direction }: { percentage: number; direction: 'up' | 'down' | 'flat' }) {
+function MonthChangeBadge({
+    percentage,
+    direction,
+    lastMonth,
+}: {
+    percentage: number;
+    direction: 'up' | 'down' | 'flat';
+    lastMonth?: number;
+}) {
     const isUp = direction === 'up';
     const isDown = direction === 'down';
     const styles = isUp
@@ -58,15 +89,29 @@ function MonthChangeBadge({ percentage, direction }: { percentage: number; direc
     const Icon = isUp ? ArrowUpRight : isDown ? ArrowDownRight : ArrowRight;
     const sign = isUp ? '+' : isDown ? '-' : '';
     const label = direction === 'flat' ? '0%' : `${sign}${percentage.toFixed(2)}%`;
+    const lastMonthText = lastMonth !== undefined ? formatCurrency(lastMonth) : null;
+    const statusLabel = isUp ? 'Naik' : isDown ? 'Turun' : 'Stabil';
+    const tooltipTitle = `vs Bulan Lalu (${statusLabel})`;
+    const titleText = lastMonthText ? `${tooltipTitle}: ${lastMonthText}` : tooltipTitle;
 
     return (
-        <span
-            title="vs Bulan Lalu"
-            className={`inline-flex shrink-0 items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-bold sm:text-xs ${styles}`}
-        >
-            <Icon className="h-3 w-3 shrink-0 stroke-[2.5]" />
-            <span>{label}</span>
-        </span>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <span
+                    title={titleText}
+                    className={`inline-flex shrink-0 items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-bold sm:text-xs ${styles} cursor-pointer`}
+                >
+                    <Icon className="h-3 w-3 shrink-0 stroke-[2.5]" />
+                    <span>{label}</span>
+                </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs text-white shadow-xl">
+                <p className={`text-[10px] font-semibold ${isUp ? 'text-emerald-300' : isDown ? 'text-rose-300' : 'text-slate-300'}`}>
+                    vs Bulan Lalu ({statusLabel})
+                </p>
+                {lastMonthText && <p className="text-xs font-bold text-white">{lastMonthText}</p>}
+            </TooltipContent>
+        </Tooltip>
     );
 }
 
@@ -114,8 +159,16 @@ export function PlatformStatCardGrid({ item, className, onOpenDetail }: CardProp
                         {formatCurrency(item.this_month)}
                     </p>
                     <div className="mt-0.5 flex shrink-0 flex-wrap items-center gap-1 sm:flex-nowrap">
-                        <AvgChangeBadge percentage={item.avg_change_percentage} direction={item.avg_change_direction} />
-                        <MonthChangeBadge percentage={item.month_change_percentage} direction={item.month_change_direction} />
+                        <AvgChangeBadge
+                            percentage={item.avg_change_percentage}
+                            direction={item.avg_change_direction}
+                            monthlyAvg={item.monthly_avg}
+                        />
+                        <MonthChangeBadge
+                            percentage={item.month_change_percentage}
+                            direction={item.month_change_direction}
+                            lastMonth={item.last_month}
+                        />
                     </div>
                 </button>
 
@@ -132,7 +185,11 @@ export function PlatformStatCardGrid({ item, className, onOpenDetail }: CardProp
                         {formatCurrency(item.today)}
                     </p>
                     <div className="mt-0.5 flex shrink-0 items-center">
-                        <ChangeBadge percentage={item.day_change_percentage} direction={item.day_change_direction} />
+                        <ChangeBadge
+                            percentage={item.day_change_percentage}
+                            direction={item.day_change_direction}
+                            yesterday={item.yesterday}
+                        />
                     </div>
                 </button>
             </div>
@@ -173,8 +230,16 @@ export function PlatformStatCardCarousel({ item, className, onOpenDetail }: Card
                         {formatCurrency(item.this_month)}
                     </p>
                     <div className="mt-auto flex items-center gap-1.5 pt-2">
-                        <AvgChangeBadge percentage={item.avg_change_percentage} direction={item.avg_change_direction} />
-                        <MonthChangeBadge percentage={item.month_change_percentage} direction={item.month_change_direction} />
+                        <AvgChangeBadge
+                            percentage={item.avg_change_percentage}
+                            direction={item.avg_change_direction}
+                            monthlyAvg={item.monthly_avg}
+                        />
+                        <MonthChangeBadge
+                            percentage={item.month_change_percentage}
+                            direction={item.month_change_direction}
+                            lastMonth={item.last_month}
+                        />
                     </div>
                     <p className="mt-2 text-[10px] text-slate-500">Rincian per bulan</p>
                 </button>
@@ -189,7 +254,11 @@ export function PlatformStatCardCarousel({ item, className, onOpenDetail }: Card
                         {formatCurrency(item.today)}
                     </p>
                     <div className="mt-auto pt-2">
-                        <ChangeBadge percentage={item.day_change_percentage} direction={item.day_change_direction} />
+                        <ChangeBadge
+                            percentage={item.day_change_percentage}
+                            direction={item.day_change_direction}
+                            yesterday={item.yesterday}
+                        />
                     </div>
                     <p className="mt-2 text-[10px] text-slate-500">Rincian per hari</p>
                 </button>

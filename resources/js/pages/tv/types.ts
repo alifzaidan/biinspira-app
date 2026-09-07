@@ -4,7 +4,9 @@ export type PlatformStat = {
     logo?: string | null;
     total: number;
     this_month: number;
+    last_month?: number;
     today: number;
+    yesterday?: number;
     month_change_percentage: number;
     month_change_direction: 'up' | 'down' | 'flat';
     day_change_percentage: number;

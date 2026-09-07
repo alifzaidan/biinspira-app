@@ -308,13 +308,13 @@ export default function GroupDrilldownDialog({ open, onOpenChange, loading, erro
                                                             <div className="flex items-center justify-between">
                                                                 <span className="text-slate-500">vs Rata-rata</span>
                                                                 {dataPoint.avg_change_direction === 'up' && (
-                                                                    <span className="flex items-center font-bold text-emerald-600">
+                                                                    <span className="flex items-center font-bold text-indigo-600">
                                                                         <ArrowUpRight className="mr-0.5 h-3 w-3" />+
                                                                         {dataPoint.avg_change_percentage.toFixed(2)}%
                                                                     </span>
                                                                 )}
                                                                 {dataPoint.avg_change_direction === 'down' && (
-                                                                    <span className="flex items-center font-bold text-rose-600">
+                                                                    <span className="flex items-center font-bold text-amber-600">
                                                                         <ArrowDownRight className="mr-0.5 h-3 w-3" />-
                                                                         {dataPoint.avg_change_percentage.toFixed(2)}%
                                                                     </span>
